@@ -377,7 +377,7 @@
     <string name="pref_text_mms_notification_vibrate_custom">Formát zap/vyp v milisekundách: vyp, zap, vyp, zap, ...</string>
     <string name="pref_extra_settings">Extra nastavení</string>
     <string name="pref_title_strip_unicode">Odstranění diakritiky</string>
-    <string name="pref_summary_strip_unicode">Nahrazovat místní znaky, které nejsou podporovány ve 160 znacích SMS zpráv./string>
+    <string name="pref_summary_strip_unicode">Nahrazovat místní znaky, které nejsou podporovány ve 160 znacích SMS zpráv.</string>
     <string name="pref_title_enable_emojis">Podpora Smajlíků</string>
     <string name="pref_summary_enable_emojis">Povolit podporu Unicode emojis. Použít 471 pěkných smajlíků</string>
     <string name="pref_title_pref_key_emojis_quick">Tlačítko smajlíků</string>
