@@ -61,6 +61,6 @@
     <color name="darkgray_backgrounds">#666666</color>
     <color name="quickmessage_body_dark_bg">#ff1e1e1e</color>
     <color name="quickmessage_body_light_bg">#fff3f3f3</color>
-    <color name="dividers">#202020</color>
+    <color name="dividers">#eeeeee</color>
     <color name="transparent">#00000000</color>
 </resources>
