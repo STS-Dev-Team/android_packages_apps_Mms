@@ -24,11 +24,11 @@ import java.util.Set;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapFactory.Options;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory.Options;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.util.Log;
@@ -36,7 +36,6 @@ import android.util.Log;
 import com.android.mms.LogTag;
 import com.android.mms.R;
 import com.android.mms.TempFileProvider;
-import com.android.mms.ui.MessageItem;
 import com.android.mms.ui.UriImage;
 import com.android.mms.util.ImageCacheService.ImageData;
 
@@ -181,8 +180,16 @@ public class ThumbnailManager extends BackgroundLoaderManager {
 
     // Delete the on-disk cache, but leave the in-memory cache intact
     public synchronized void clearBackingStore() {
-        getImageCacheService().clear();
-        mImageCacheService = null;  // force a re-init the next time getImageCacheService requested
+        if (mImageCacheService == null) {
+            // No need to call getImageCacheService() to renew the instance if it's null.
+            // It's enough to only delete the image cache files for the sake of safety.
+            CacheManager.clear(mContext);
+        } else {
+            getImageCacheService().clear();
+
+            // force a re-init the next time getImageCacheService requested
+            mImageCacheService = null;
+        }
     }
 
     public void removeThumbnail(Uri uri) {
