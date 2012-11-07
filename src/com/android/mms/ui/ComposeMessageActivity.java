@@ -145,7 +145,9 @@ import com.android.mms.data.WorkingMessage.MessageStatusListener;
 import com.android.mms.drm.DrmUtils;
 import com.android.mms.model.SlideModel;
 import com.android.mms.model.SlideshowModel;
+import com.android.mms.themes.Themes;
 import com.android.mms.transaction.MessagingNotification;
+import com.android.mms.ui.ColorFilterMaker;
 import com.android.mms.ui.MessageListView.OnSizeChangedListener;
 import com.android.mms.ui.MessageUtils.ResizeImageResultCallback;
 import com.android.mms.ui.RecipientsEditor.RecipientContextMenuInfo;
@@ -326,6 +328,10 @@ public class ComposeMessageActivity extends Activity
      * Whether this activity is currently running (i.e. not paused)
      */
     private boolean mIsRunning;
+
+    // signature
+    private String mSignature;
+    private SharedPreferences sp;
 
     @SuppressWarnings("unused")
     public static void log(String logMsg) {
@@ -3607,6 +3613,14 @@ public class ComposeMessageActivity extends Activity
             // send can change the recipients. Make sure we remove the listeners first and then add
             // them back once the recipient list has settled.
             removeRecipientsListeners();
+
+            // add signature if set.
+            sp = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+            mSignature = sp.getString(Themes.PREF_SIGNATURE, "");
+            if (!mSignature.isEmpty()) {
+                mSignature = "\n" + mSignature;
+                mWorkingMessage.setText(mWorkingMessage.getText() + mSignature);
+            }
 
             mWorkingMessage.send(mDebugRecipients);
 
