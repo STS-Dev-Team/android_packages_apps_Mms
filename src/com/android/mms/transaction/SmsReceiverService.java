@@ -365,6 +365,7 @@ public class SmsReceiverService extends Service {
         if (messageUri != null) {
             long threadId = MessagingNotification.getSmsThreadId(this, messageUri);
             // Called off of the UI thread so ok to block.
+            Log.d(TAG, "handleSmsReceived messageUri: " + messageUri + " threadId: " + threadId);
             MessagingNotification.blockingUpdateNewMessageIndicator(this, threadId, false);
         }
     }
@@ -502,7 +503,7 @@ public class SmsReceiverService extends Service {
 
     public static String replaceFormFeeds(String s) {
         // Some providers send formfeeds in their messages. Convert those formfeeds to newlines.
-        return s.replace('\f', '\n');
+        return s == null ? "" : s.replace('\f', '\n');
     }
 
 //    private static int count = 0;

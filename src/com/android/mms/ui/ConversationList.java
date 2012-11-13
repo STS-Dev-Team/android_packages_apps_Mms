@@ -86,6 +86,7 @@ import com.google.android.mms.pdu.PduHeaders;
 public class ConversationList extends ListActivity implements DraftCache.OnDraftChangedListener {
     private static final String TAG = "ConversationList";
     private static final boolean DEBUG = false;
+    private static final boolean DEBUGCLEANUP = true;
     private static final boolean LOCAL_LOGV = DEBUG;
 
     private static final int THREAD_LIST_QUERY_TOKEN       = 1701;
@@ -104,7 +105,7 @@ public class ConversationList extends ListActivity implements DraftCache.OnDraft
     private ConversationListAdapter mListAdapter;
     private SharedPreferences mPrefs;
     private Handler mHandler;
-    private boolean mNeedToRemoveObsoleteThreads;
+    private boolean mDoOnceAfterFirstQuery;
     private TextView mUnreadConvCount;
     private MenuItem mSearchItem;
     private SearchView mSearchView;
@@ -252,7 +253,7 @@ public class ConversationList extends ListActivity implements DraftCache.OnDraft
 
         DraftCache.getInstance().addOnDraftChangedListener(this);
 
-        mNeedToRemoveObsoleteThreads = true;
+        mDoOnceAfterFirstQuery = true;
 
         startAsyncQuery();
 
@@ -679,11 +680,8 @@ public class ConversationList extends ListActivity implements DraftCache.OnDraft
                         Conversation.startDeleteAll(mHandler, token, mDeleteLockedMessages);
                         DraftCache.getInstance().refresh();
                     } else {
-                        for (long threadId : mThreadIds) {
-                            Conversation.startDelete(mHandler, token, mDeleteLockedMessages,
-                                    threadId);
-                            DraftCache.getInstance().setDraftState(threadId, false);
-                        }
+                        Conversation.startDelete(mHandler, token, mDeleteLockedMessages,
+                                mThreadIds);
                     }
                 }
             });
@@ -701,8 +699,15 @@ public class ConversationList extends ListActivity implements DraftCache.OnDraft
             if (DraftCache.getInstance().getSavingDraft()) {
                 // We're still saving a draft. Try again in a second. We don't want to delete
                 // any threads out from under the draft.
+                if (DEBUGCLEANUP) {
+                    LogTag.debug("mDeleteObsoleteThreadsRunnable saving draft, trying again");
+                }
                 mHandler.postDelayed(mDeleteObsoleteThreadsRunnable, 1000);
             } else {
+                if (DEBUGCLEANUP) {
+                    LogTag.debug("mDeleteObsoleteThreadsRunnable calling " +
+                            "asyncDeleteObsoleteThreads");
+                }
                 Conversation.asyncDeleteObsoleteThreads(mQueryHandler,
                         DELETE_OBSOLETE_THREADS_TOKEN);
             }
@@ -738,13 +743,18 @@ public class ConversationList extends ListActivity implements DraftCache.OnDraft
                     ((TextView)(getListView().getEmptyView())).setText(R.string.no_conversations);
                 }
 
-                Conversation.markAllConversationsAsSeen(getApplicationContext());
-                if (mNeedToRemoveObsoleteThreads) {
-                    mNeedToRemoveObsoleteThreads = false;
-                    // Delete any obsolete threads. Obsolete threads are threads that aren't
-                    // referenced by at least one message in the pdu or sms tables. We only call
-                    // this on the first query.
+                if (mDoOnceAfterFirstQuery) {
+                    mDoOnceAfterFirstQuery = false;
+                    // Delay doing a couple of DB operations until we've initially queried the DB
+                    // for the list of conversations to display. We don't want to slow down showing
+                    // the initial UI.
+
+                    // 1. Delete any obsolete threads. Obsolete threads are threads that aren't
+                    // referenced by at least one message in the pdu or sms tables.
                     mHandler.post(mDeleteObsoleteThreadsRunnable);
+
+                    // 2. Mark all the conversations as seen.
+                    Conversation.markAllConversationsAsSeen(getApplicationContext());
                 }
                 break;
 
@@ -816,7 +826,9 @@ public class ConversationList extends ListActivity implements DraftCache.OnDraft
                 break;
 
             case DELETE_OBSOLETE_THREADS_TOKEN:
-                // Nothing to do here.
+                if (DEBUGCLEANUP) {
+                    LogTag.debug("onQueryComplete finished DELETE_OBSOLETE_THREADS_TOKEN");
+                }
                 break;
             }
         }
